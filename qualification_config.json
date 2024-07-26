@@ -1,0 +1,150 @@
+{
+    "default_qualification_type": "weightage_score",
+    "is_enabled": true,
+    "min_qualifying_score": 60,
+    "type_config": {
+       "custom_prompt": {
+          "prompt_id": null
+       },
+       "weightage_score": {
+          "categories": [
+             {
+                "category_key": "buyer_type",
+                "category_name": "Buyer type",
+                "category_value_weights": {
+                   "Decision Maker": 100,
+                   "Executive Sponsor": 100,
+                   "Influencer": 60,
+                   "Other": 10,
+                   "User": 30
+                },
+                "category_weight": 6,
+                "value": "{{ql_buyer_type}}"
+             },
+             {
+                "category_key": "buyer_team",
+                "category_name": "Buyer team",
+                "category_value_weights": {
+                   "Business ops": 100,
+                   "C-level": 100,
+                   "Others": 30,
+                   "Planning team": 80,
+                   "Supply Chain": 100
+                },
+                "category_weight": 6,
+                "value": "{{ql_buyer_team}}"
+             },
+             {
+                "category_key": "last_mile_delivery",
+                "category_name": "Will they need Last-mile delivery management",
+                "category_value_weights": {
+                   "Maybe": 50,
+                   "No": 0,
+                   "Yes": 100
+                },
+                "category_weight": 18,
+                "value": "{{ql_company_need_last_mile_delivery}}"
+             },
+             {
+                "category_key": "industry",
+                "category_name": "Industry",
+                "category_value_weights": {
+                   "Big and bulky": 100,
+                   "Courier and logistics": 100,
+                   "E-commerce": 80,
+                   "Grocery": 80,
+                   "Other": 40
+                },
+                "category_weight": 18,
+                "value": "{{ql_company_industry}}"
+             },
+             {
+                "category_key": "distribution_channel",
+                "category_name": "Distribution channel / Type of customers it serves",
+                "category_value_weights": {
+                   "B2B": 80,
+                   "B2C": 90,
+                   "D2C": 90,
+                   "Marketplace": 50,
+                   "Multiple": 100
+                },
+                "category_weight": 12,
+                "value": "{{ql_company_dist_channels}}"
+             },
+             {
+                "category_key": "primary_product",
+                "category_name": "Company Primary Product / Service type",
+                "category_value_weights": {
+                   "Delivery as a product": 100,
+                   "Manufacturer": 60,
+                   "Other": 0,
+                   "Retailer": 80
+                },
+                "category_weight": 14,
+                "value": "{{ql_company_primary_product}}"
+             },
+             {
+                "category_key": "company_size",
+                "category_name": "Company Size",
+                "category_value_weights": {
+                   "100 - 500": 40,
+                   "1000 - 10000": 80,
+                   "500 - 1000": 60,
+                   "<100": 20,
+                   ">10000": 100
+                },
+                "category_weight": 4,
+                "value": "{{ql_company_size}}"
+             },
+             {
+                "category_key": "company_revenue",
+                "category_name": "Company Revenue",
+                "category_value_weights": {
+                   "100M - 1B": 80,
+                   "10M - 100M": 60,
+                   "1B+": 100,
+                   "<10M": 30
+                },
+                "category_weight": 8,
+                "value": "{{ql_company_revenue}}"
+             },
+             {
+                "category_key": "number_of_locations",
+                "category_name": "Number of Locations",
+                "category_value_weights": {
+                   "1-2": 30,
+                   "10+": 100,
+                   "2-10": 60
+                },
+                "category_weight": 4,
+                "value": "{{ql_company_location_count}}"
+             },
+             {
+                "category_key": "tech_maturity",
+                "category_name": "Tech Maturity",
+                "category_value_weights": {
+                   "High": 100,
+                   "Low": 30,
+                   "Medium": 60,
+                   "Unclear": 0
+                },
+                "category_weight": 8,
+                "value": "{{ql_company_tech_maturity}}"
+             },
+             {
+                "category_key": "headquarter_region",
+                "category_name": "Headquarter Region",
+                "category_value_weights": {
+                   "APAC": 60,
+                   "LATAM": 80,
+                   "MEA": 60,
+                   "NORAM": 100,
+                   "Other": 0
+                },
+                "category_weight": 2,
+                "value": "{{ql_company_headquarters}}"
+             }
+          ]
+       }
+    }
+ }
