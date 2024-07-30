@@ -175,7 +175,7 @@ def get_validation_chat_chain():
         temperature=0.1,
         openai_api_key=OPENAI_API_KEY,
     )
-    structured_llm = llm.with_structured_output(QualificationConfigOutput)
+    structured_llm = llm.bind_tools([QualificationConfigOutput])
     validation_chain = (
         {
             "qualification_config": lambda x: x["qualification_config"],
@@ -204,7 +204,7 @@ async def get_validated_qualification_config(chat_history, qualification_config)
             "chat_history": chat_history,
         }
     )
-    
+
     # if tool is not used.
     if isinstance(agent_output, QualificationConfigOutput):
         return agent_output.dict()
