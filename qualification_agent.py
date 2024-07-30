@@ -204,6 +204,10 @@ async def get_validated_qualification_config(chat_history, qualification_config)
             "chat_history": chat_history,
         }
     )
+    
+    # if tool is not used.
+    if isinstance(agent_output, QualificationConfigOutput):
+        return agent_output.dict()
 
     tool_calls = agent_output.tool_calls
     if not tool_calls:
