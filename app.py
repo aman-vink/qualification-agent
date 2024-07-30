@@ -11,6 +11,11 @@ from qualification_process_state import QualificationProcessState
 st.set_page_config(page_title="Qualification Agent", page_icon="🦜")
 
 
+os.environ["LANGCHAIN_API_KEY"] = st.secrets["LANGCHAIN_API_KEY"]
+os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["LANGCHAIN_TRACING_V2"]
+os.environ["LANGCHAIN_PROJECT"] = st.secrets["LANGCHAIN_PROJECT"]
+os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+
 def input_json(qualification_config):
     """Function to input a JSON string and load its content."""
     json_input = st.sidebar.text_area(
@@ -203,7 +208,9 @@ if st.sidebar.button("Save Chat Prompt"):
 
 validation_prompt = st.sidebar.text_area(
     "Edit Qualification Validation Prompt",
-    value=st.session_state.get(validation_prompt_key, default_qualification_validation_prompt),
+    value=st.session_state.get(
+        validation_prompt_key, default_qualification_validation_prompt
+    ),
     height=200,
     key=validation_prompt_key,
 )
