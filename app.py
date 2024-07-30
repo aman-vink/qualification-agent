@@ -16,9 +16,6 @@ os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["LANGCHAIN_TRACING_V2"]
 os.environ["LANGCHAIN_PROJECT"] = st.secrets["LANGCHAIN_PROJECT"]
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
-st.write(st.secrets)
-print(os.environ["OPENAI_API_KEY"])
-
 def input_json(qualification_config):
     """Function to input a JSON string and load its content."""
     json_input = st.sidebar.text_area(
