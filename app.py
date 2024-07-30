@@ -180,8 +180,6 @@ qualification_df = get_qualification_table(st.session_state["qualification_confi
 st.session_state["qualification_df"] = qualification_df
 display_qualification_table(qualification_df)
 
-openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
-
 # Download JSON button
 download_json(st.session_state["qualification_config"], "qualification_config.json")
 
