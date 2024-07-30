@@ -9,19 +9,34 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, System
 from langchain_core.chat_history import BaseChatMessageHistory
 from langgraph.graph import StateGraph, END
 from langchain_core.tools import tool
-from prompts import get_qualification_chat_prompt, get_qualification_validate_prompt
+import pprint
+from langchain_core.output_parsers import StrOutputParser
+from langchain.output_parsers.openai_tools import JsonOutputKeyToolsParser
+
+from prompts import (
+    get_qualification_chat_prompt,
+    get_qualification_validate_prompt,
+)
 from qualification_process_state import QualificationProcessState
 
-# API Key is now sourced from environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 class CategoryInternalValue(BaseModel):
+    """
+    Model representing the weight and value of a category.
+    """
+
     name: str = Field(..., description="Name of the category value")
     weight: int = Field(..., description="Weight of the category value")
 
 
 class Category(BaseModel):
+    """
+    Model representing a category with a unique identifier, human-readable name,
+    value weights, overall weight, and the assigned value.
+    """
+
     category_key: str = Field(..., description="Unique identifier for the category")
     category_name: str = Field(..., description="Human-readable name for the category")
     category_value_weights: List[CategoryInternalValue] = Field(
@@ -32,12 +47,20 @@ class Category(BaseModel):
 
 
 class WeightageScoreConfig(BaseModel):
+    """
+    Model representing the configuration for weightage scores with a list of categories.
+    """
+
     categories: List[Category] = Field(
         ..., description="List of categories with their configurations"
     )
 
 
 class QualificationDict(BaseModel):
+    """
+    Model representing the full qualification configuration with weightage score settings.
+    """
+
     weightage_score: WeightageScoreConfig = Field(
         ..., description="Configuration for weightage score based qualification"
     )
@@ -59,6 +82,10 @@ class QualificationResponse(BaseModel):
 
 
 class QualificationConfigOutput(BaseModel):
+    """
+    Model representing the qualification configuration with weightage score settings.
+    """
+
     operation_performed: Literal[
         QualificationProcessState.CATEGORY_CREATED,
         QualificationProcessState.CATEGORY_REMOVED,
@@ -75,26 +102,17 @@ class QualificationConfigOutput(BaseModel):
         QualificationProcessState.NO_CHANGE,
     ] = Field(..., description="Operation performed by user")
     qualification_config: QualificationDict = Field(
-        ..., description="Final qualification config after validation and changes"
+        ..., description="final qualification config after validation and changes"
     )
 
 
 @tool("final_decision_tool")
 def final_decision_tool(decision_str: str):
     """
-    Tool used when the user is ready to save the changes and AI has gathered all the information required to change the qualification configuration.
+    Tool to used when the user is ready to save the changes and AI gathered all the information required to change to the qualification configuration.
     """
-    print(f"Final Decision Tool called with decision: {decision_str}")
+    pprint.pprint(decision_str)
     return decision_str
-
-
-@tool("rearrange_categories_weight_tool")
-def rearrange_categories_weight_tool(rearrange_str: str):
-    """
-    Tool used when categories weights need to be rearranged. Used when a category is removed, added, or weight changes.
-    """
-    print(f"Rearrange Categories Weight Tool called with: {rearrange_str}")
-    return rearrange_str
 
 
 def get_qualification_chat_chain():
@@ -113,7 +131,6 @@ def get_qualification_chat_chain():
     llm = ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0.1,
-        openai_api_key=OPENAI_API_KEY,
     )
 
     llm = llm.bind_tools([final_decision_tool])
@@ -137,7 +154,6 @@ async def summarize_messages(chat_messages):
     llm = ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0.1,
-        openai_api_key=OPENAI_API_KEY,
     )
 
     summarization_prompt = ChatPromptTemplate.from_messages(
@@ -173,7 +189,6 @@ def get_validation_chat_chain():
     llm = ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0.1,
-        openai_api_key=OPENAI_API_KEY,
     )
     structured_llm = llm.bind_tools([QualificationConfigOutput])
     validation_chain = (
@@ -188,6 +203,11 @@ def get_validation_chat_chain():
 
 
 class QualificationAgentState(TypedDict):
+    """
+    State model for the qualification agent containing user input, chat history,
+    qualification configuration, and AI output.
+    """
+
     user_input: str
     chat_history_db: BaseChatMessageHistory
     chat_history: list[BaseMessage]
@@ -205,14 +225,12 @@ async def get_validated_qualification_config(chat_history, qualification_config)
         }
     )
 
-    # if tool is not used.
     if isinstance(agent_output, QualificationConfigOutput):
         return agent_output.dict()
 
     tool_calls = agent_output.tool_calls
     if not tool_calls:
         print("No tool calls")
-        return qualification_config
 
     qualification_config = tool_calls[0]["args"]
     return qualification_config
@@ -220,8 +238,10 @@ async def get_validated_qualification_config(chat_history, qualification_config)
 
 async def output_state(state):
     user_and_ai_chat = state["chat_history"]
+
     chat_history = []
 
+    # no need to pass tool msg in chat history.
     first_ai_message = True
     for msg in user_and_ai_chat:
         if isinstance(msg, AIMessage) and (msg.tool_calls or first_ai_message):
@@ -230,26 +250,29 @@ async def output_state(state):
             continue
         chat_history.append(msg)
 
-    print("Processing chat history")
+    print("OYOYOOYOY")
 
     current_qualification_config = state["qualification_config"]
-    tasks = [
-        get_validated_qualification_config(chat_history, current_qualification_config),
-        summarize_messages(chat_history),
-    ]
+    tasks = []
+    tasks.append(
+        get_validated_qualification_config(chat_history, current_qualification_config)
+    )
+    tasks.append(summarize_messages(chat_history))
     results = await asyncio.gather(*tasks)
     return results
 
 
 def final_decision_node(state):
     """
-    Updates the qualification configuration in the state with the latest content from the chat history.
+    Updates the qualification configuration in the state with the latest content
+    from the chat history.
     """
     results = asyncio.run(output_state(state))
-    summary_output, qualification_config_output = results
+    summary_output = results[1]
+    qualification_config_output = results[0]
 
-    print("Summary Output:", summary_output)
-    print("Qualification Config Output:", qualification_config_output)
+    print(summary_output)
+    print(qualification_config_output)
 
     operation_performed = qualification_config_output["operation_performed"]
     state["qualification_process_state"] = operation_performed
@@ -259,12 +282,16 @@ def final_decision_node(state):
     ai_output = state["ai_output"]
     chat_history = state["chat_history"]
 
-    new_chat_history = [
-        msg for msg in chat_history if not isinstance(msg, SystemMessage)
-    ]
-    new_chat_history.append(AIMessage(summary_output["distilled_chat"]))
+    # remove the previous chat history and add the distilled chat message.
+    new_chat_history = []
 
-    print("Updated Chat History:", new_chat_history)
+    first_ai_message = True
+    for msg in chat_history:
+        if isinstance(msg, SystemMessage):
+            new_chat_history.append(msg)
+
+    new_chat_history.append(AIMessage(summary_output["distilled_chat"]))
+    print(chat_history)
     state["chat_history"] = new_chat_history
     state["chat_history_db"].add_ai_message(AIMessage(ai_output))
     return state
@@ -287,18 +314,28 @@ def validate_step_node(state):
     agent_output = state["chat_history"][-1]
     tool_calls_list = agent_output.tool_calls
 
+    # no tools called.
     if not tool_calls_list:
         return False
 
+    # we have decided to use one tool only so it should be final decision tool.
     tool_dict = tool_calls_list[0]
+
     tool_name = tool_dict.get("name")
 
-    print("Tool Name:", tool_name)
+    print(tool_name)
+    # if tool_name == "adjust_categories_weight_tool":
+    #     print(output)
+    #     rearrange_chain = get_rearrange_categories_weight_tool_chain()
+    #     output = rearrange_chain.invoke(
+    #         {"categories_weights_message": state["chat_history"][-1].content}
+    #     )
     if tool_name != "final_decision_tool":
         return False
 
+    # original qualification config passed.
     qualification_config = tool_dict.get("args")
-    print("Qualification Config:", qualification_config)
+    print(qualification_config)
     return True
 
 
